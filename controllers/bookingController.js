@@ -3,6 +3,17 @@ const User = require('../models/userModel');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 
+// Add this function at the top of your file
+const setCorsHeaders = (res) => {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', 'https://schedura-landing-page.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
+};
+
 // Configure email transporter (replace with your actual email service)
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || 'gmail',
@@ -14,6 +25,14 @@ const transporter = nodemailer.createTransport({
 
 // Get all bookings for the logged-in user
 exports.getAllBookings = async (req, res) => {
+  // Set CORS headers
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const bookings = await Booking.find({ host: req.user.id });
     
@@ -29,6 +48,14 @@ exports.getAllBookings = async (req, res) => {
 
 // Get a single booking by ID
 exports.getBooking = async (req, res) => {
+  // Set CORS headers
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const booking = await Booking.findById(req.params.id);
     
@@ -59,6 +86,14 @@ exports.getBooking = async (req, res) => {
 
 // Create a new booking
 exports.createBooking = async (req, res) => {
+  // Set CORS headers
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const {
       title,
@@ -108,6 +143,14 @@ exports.createBooking = async (req, res) => {
 
 // Update a booking
 exports.updateBooking = async (req, res) => {
+  // Set CORS headers
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const booking = await Booking.findById(req.params.id);
     
@@ -147,6 +190,14 @@ exports.updateBooking = async (req, res) => {
 
 // Delete a booking
 exports.deleteBooking = async (req, res) => {
+  // Set CORS headers
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const booking = await Booking.findById(req.params.id);
     
@@ -182,6 +233,14 @@ exports.deleteBooking = async (req, res) => {
 
 // Get public booking by username and event title
 exports.getPublicBooking = async (req, res) => {
+  // Set CORS headers
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const { username, eventTitle } = req.params;
     
@@ -226,6 +285,14 @@ exports.getPublicBooking = async (req, res) => {
 
 // Schedule a booking (for attendees)
 exports.scheduleBooking = async (req, res) => {
+  // Set CORS headers
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const { bookingId, attendeeName, attendeeEmail, selectedDate, selectedTime, notes } = req.body;
     
@@ -278,6 +345,14 @@ exports.scheduleBooking = async (req, res) => {
 
 // Get email content by ID
 exports.getEmailContent = async (req, res) => {
+  // Set CORS headers
+  setCorsHeaders(res);
+  
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const { emailId } = req.params;
     

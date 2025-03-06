@@ -1,8 +1,12 @@
 const express = require('express');
 const bookingController = require('../controllers/bookingController');
 const authMiddleware = require('../middleware/authMiddleware');
+const corsMiddleware = require('../middleware/cors');
 
 const router = express.Router();
+
+// Apply CORS middleware to all routes
+router.use(corsMiddleware);
 
 // Protect all routes after this middleware (except the ones specified)
 router.use(authMiddleware.protect);
