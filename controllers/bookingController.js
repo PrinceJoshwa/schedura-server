@@ -1,6 +1,5 @@
-const Booking = require('../models/bookingModel');
-const User = require('../models/userModel');
-const { sendEmail } = require('../utils/email');
+import Booking from '../models/bookingModel';
+import { sendEmail } from '../utils/email';
 
 // @desc    Create a new booking
 // @route   POST /api/bookings
@@ -8,7 +7,7 @@ const { sendEmail } = require('../utils/email');
 const createBooking = async (req, res) => {
   try {
     const { title, start, end, duration, location, type, availability, attendeeName, attendeeEmail, notes } = req.body;
-    const host = req.user.id;
+    const host = req.user._id;
 
     const booking = await Booking.create({
       title,
@@ -45,7 +44,7 @@ const createBooking = async (req, res) => {
 // @access  Private
 const getBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ host: req.user.id }).sort({ start: -1 });
+    const bookings = await Booking.find({ host: req.user._id }).sort({ start: -1 });
     res.status(200).json(bookings);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -82,7 +81,7 @@ const updateBooking = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.host.toString() !== req.user.id) {
+    if (booking.host.toString() !== req.user._id) {
       return res.status(401).json({ message: 'Not authorized to update this booking' });
     }
 
@@ -116,7 +115,7 @@ const deleteBooking = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.host.toString() !== req.user.id) {
+    if (booking.host.toString() !== req.user._id) {
       return res.status(401).json({ message: 'Not authorized to delete this booking' });
     }
 
@@ -128,10 +127,4 @@ const deleteBooking = async (req, res) => {
   }
 };
 
-module.exports = {
-  createBooking,
-  getBookings,
-  getBookingById,
-  updateBooking,
-  deleteBooking,
-};
+export { createBooking, getBookings, getBookingById, updateBooking, deleteBooking };

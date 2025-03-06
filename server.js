@@ -33,12 +33,7 @@ app.use(morgan('dev'));
 
 // API routes
 app.use('/api/users', userRoutes);
-
-app.use("/api/bookings", cors(), authenticate);
-
-app.get("/api/bookings", authenticate, (req, res) => {
-  res.json([{ id: 1, title: "Meeting with client" }]); // Sample data
-});
+app.use('/api/bookings', bookingRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

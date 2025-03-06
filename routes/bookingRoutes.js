@@ -1,16 +1,20 @@
-const express = require('express');
-const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
-const {
+import express from 'express';
+import { protect } from '../middleware/authMiddleware';
+import {
   createBooking,
   getBookings,
   getBookingById,
   updateBooking,
-  deleteBooking,
-} = require('../controllers/bookingController');
+  deleteBooking
+} from '../controllers/bookingController.js';
 
+const router = express.Router();
 // Routes for bookings
-router.route('/').post(protect, createBooking).get(protect, getBookings);
-router.route('/:id').get(protect, getBookingById).put(protect, updateBooking).delete(protect, deleteBooking);
+router.route('/')
+        .post(protect, createBooking)
+        .get(protect, getBookings);
+router.route('/:id')
+        .get(protect, getBookingById)
+        .put(protect, updateBooking).delete(protect, deleteBooking);
 
-module.exports = router;
+export default router;
