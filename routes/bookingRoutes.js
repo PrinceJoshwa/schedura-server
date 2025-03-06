@@ -1,31 +1,16 @@
-import express from 'express';
-import { protect } from '../middleware/authMiddleware.js';
-import { 
-  createBooking, 
-  getBookings, 
-  getBookingDetails, 
-  updateBooking, 
-  deleteBooking,
-  getPublicBookingDetails,
-  scheduleBooking,
-  getEmailContentEndpoint
-} from '../controllers/bookingController.js';
-
+const express = require('express');
 const router = express.Router();
+const { protect } = require('../middleware/authMiddleware');
+const {
+  createBooking,
+  getBookings,
+  getBookingById,
+  updateBooking,
+  deleteBooking,
+} = require('../controllers/bookingController');
 
-// Protected routes
-router.route('/')
-  .post(protect, createBooking)
-  .get(protect, getBookings);
+// Routes for bookings
+router.route('/').post(protect, createBooking).get(protect, getBookings);
+router.route('/:id').get(protect, getBookingById).put(protect, updateBooking).delete(protect, deleteBooking);
 
-router.route('/:bookingId')
-  .get(protect, getBookingDetails)
-  .put(protect, updateBooking)
-  .delete(protect, deleteBooking);
-
-// Public routes
-router.get('/public/:username/:eventTitle', getPublicBookingDetails);
-router.post('/schedule', scheduleBooking);
-router.get('/email/:emailId', getEmailContentEndpoint);
-
-export default router;
+module.exports = router;
