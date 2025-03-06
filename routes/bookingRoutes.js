@@ -1,29 +1,31 @@
-const express = require('express');
-const bookingController = require('../controllers/bookingController');
-const authMiddleware = require('../middleware/authMiddleware');
-const corsMiddleware = require('../middleware/cors');
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import { 
+  createBooking, 
+  getBookings, 
+  getBookingDetails, 
+  updateBooking, 
+  deleteBooking,
+  getPublicBookingDetails,
+  scheduleBooking,
+  getEmailContentEndpoint
+} from '../controllers/bookingController.js';
 
 const router = express.Router();
 
-// Apply CORS middleware to all routes
-router.use(corsMiddleware);
-
-// Protect all routes after this middleware (except the ones specified)
-router.use(authMiddleware.protect);
-
-// Public routes (no authentication required)
-router.get('/public/:username/:eventTitle', bookingController.getPublicBooking);
-router.post('/schedule', bookingController.scheduleBooking);
-router.get('/email/:emailId', bookingController.getEmailContent);
-
-// Protected routes (authentication required)
+// Protected routes
 router.route('/')
-  .get(bookingController.getAllBookings)
-  .post(bookingController.createBooking);
+  .post(protect, createBooking)
+  .get(protect, getBookings);
 
-router.route('/:id')
-  .get(bookingController.getBooking)
-  .put(bookingController.updateBooking)
-  .delete(bookingController.deleteBooking);
+router.route('/:bookingId')
+  .get(protect, getBookingDetails)
+  .put(protect, updateBooking)
+  .delete(protect, deleteBooking);
 
-module.exports = router;
+// Public routes
+router.get('/public/:username/:eventTitle', getPublicBookingDetails);
+router.post('/schedule', scheduleBooking);
+router.get('/email/:emailId', getEmailContentEndpoint);
+
+export default router;

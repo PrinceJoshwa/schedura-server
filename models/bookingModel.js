@@ -1,73 +1,77 @@
-const mongoose = require('mongoose');
 
-const bookingSchema = new mongoose.Schema(
-  {
-    title: {
-      type: String,
-      required: [true, 'A booking must have a title'],
-      trim: true
-    },
-    duration: {
-      type: Number,
-      required: [true, 'A booking must have a duration'],
-      min: 1
-    },
-    type: {
-      type: String,
-      enum: ['one-on-one', 'group', 'round-robin', 'standard'],
-      default: 'standard'
-    },
-    location: {
-      type: String,
-      default: 'Google Meet'
-    },
-    availability: {
-      type: String,
-      default: 'Weekdays, 9 am - 5 pm'
-    },
-    start: {
-      type: Date,
-      required: [true, 'A booking must have a start time']
-    },
-    end: {
-      type: Date,
-      required: [true, 'A booking must have an end time']
-    },
-    host: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'A booking must belong to a host']
-    },
-    attendeeName: {
-      type: String
-    },
-    attendeeEmail: {
-      type: String
-    },
-    notes: {
-      type: String
+
+import mongoose from "mongoose";
+
+const bookingSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+  },
+  duration: {
+    type: Number,
+    required: true,
+  },
+  type: {
+    type: String,
+    enum: ["one-on-one", "group", "round-robin"],
+    required: true,
+  },
+  host: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  location: {
+    type: String,
+    default: "Google Meet",
+  },
+  start: {
+    type: Date,
+    required: true,
+  },
+  end: {
+    type: Date,
+    required: true,
+  },
+  availability: {
+    type: String,
+    default: "Weekdays, 9 AM - 5 PM",
+  },
+  maxParticipants: {
+    type: Number,
+    default: 1,
+  },
+  attendeeEmail: {
+    type: String,
+    validate: {
+      validator: function(v) {
+        return !v || /\S+@\S+\.\S+/.test(v);
+      },
+      message: props => `${props.value} is not a valid email address!`
     }
   },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+  attendeeName: String,
+  notes: String,
+  status: {
+    type: String,
+    enum: ['available', 'scheduled', 'cancelled'],
+    default: 'available'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+// Add a pre-save middleware to ensure end time is after start time
+bookingSchema.pre('save', function(next) {
+  if (this.start && this.end) {
+    if (this.end <= this.start) {
+      next(new Error('End time must be after start time'));
+    }
   }
-);
-
-// Index for faster queries
-bookingSchema.index({ host: 1, start: 1 });
-bookingSchema.index({ attendeeEmail: 1 });
-
-// Automatically populate host field
-bookingSchema.pre(/^find/, function(next) {
-  this.populate({
-    path: 'host',
-    select: 'name email'
-  });
   next();
 });
 
-const Booking = mongoose.model('Booking', bookingSchema);
-
-module.exports = Booking;
+const Booking = mongoose.model("Booking", bookingSchema);
+export default Booking;
