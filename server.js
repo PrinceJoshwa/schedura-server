@@ -15,6 +15,7 @@ const app = express();
 app.use(cors({
   origin: [
     process.env.CLIENT_URL,
+    'https://schedura-landing-page.vercel.app',
     'http://localhost:5173'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
