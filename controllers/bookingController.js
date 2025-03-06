@@ -1,5 +1,5 @@
-import Booking from '../models/bookingModel';
-import { sendEmail } from '../utils/email';
+import Booking from '../models/bookingModel.js';
+import { sendEmail } from '../utils/emailService.js';
 
 // @desc    Create a new booking
 // @route   POST /api/bookings

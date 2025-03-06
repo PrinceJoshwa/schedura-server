@@ -4,7 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
-import bookingRoutes from './routes/bookingRoutes';
+import bookingRoutes from './routes/bookingRoutes.js';
 
 
 dotenv.config();
