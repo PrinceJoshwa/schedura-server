@@ -4,7 +4,6 @@ import cors from 'cors';
 import morgan from 'morgan';
 import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
-import bookingRoutes from './routes/bookingRoutes';
 
 dotenv.config();
 
@@ -32,7 +31,6 @@ app.use(morgan('dev'));
 
 // API routes
 app.use('/api/users', userRoutes);
-app.use('/api/bookings', bookingRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
