@@ -252,115 +252,7 @@
 
 import Booking from "../models/bookingModel.js";
 import User from "../models/userModel.js";
-
-// Get public booking details by username and event title
-export const getPublicBookingDetails = async (req, res) => {
-  try {
-    const { username, eventTitle } = req.params;
-
-    if (!username || !eventTitle) {
-      return res.status(400).json({ 
-        message: "Username and event title are required" 
-      });
-    }
-
-    // Convert event title from URL format to readable format
-    const readableTitle = eventTitle.replace(/-/g, ' ');
-
-    // Find the booking with case-insensitive title match
-    const booking = await Booking.findOne({
-      title: new RegExp(`^${readableTitle}$`, 'i')
-    }).populate('host', 'name email');
-
-    if (!booking) {
-      return res.status(404).json({ 
-        message: "Booking not found",
-        details: `No booking found with title: ${readableTitle}`
-      });
-    }
-
-    // Format the response
-    const formattedBooking = {
-      id: booking._id,
-      title: booking.title,
-      duration: booking.duration,
-      type: booking.type,
-      location: booking.location,
-      start: booking.start,
-      end: booking.end,
-      host: {
-        name: booking.host.name,
-        email: booking.host.email
-      }
-    };
-
-    res.json(formattedBooking);
-  } catch (error) {
-    console.error('Error in getPublicBookingDetails:', error);
-    res.status(500).json({ 
-      message: "Error fetching booking details",
-      error: error.message 
-    });
-  }
-};
-
-// Schedule a booking
-export const scheduleBooking = async (req, res) => {
-  try {
-    const { bookingId, startTime, attendeeEmail, attendeeName, notes } = req.body;
-
-    if (!bookingId || !startTime || !attendeeEmail) {
-      return res.status(400).json({ 
-        message: "Missing required fields: bookingId, startTime, and attendeeEmail are required" 
-      });
-    }
-
-    // Find the original booking template
-    const bookingTemplate = await Booking.findById(bookingId);
-    if (!bookingTemplate) {
-      return res.status(404).json({ message: "Booking template not found" });
-    }
-
-    // Calculate end time based on duration
-    const startDate = new Date(startTime);
-    const endDate = new Date(startDate.getTime() + (bookingTemplate.duration * 60000));
-
-    // Check if the time slot is available
-    const conflictingBooking = await Booking.findOne({
-      host: bookingTemplate.host,
-      start: { $lt: endDate },
-      end: { $gt: startDate },
-      _id: { $ne: bookingId }
-    });
-
-    if (conflictingBooking) {
-      return res.status(400).json({ message: "Selected time slot is not available" });
-    }
-
-    // Create the scheduled booking
-    const scheduledBooking = await Booking.create({
-      title: bookingTemplate.title,
-      duration: bookingTemplate.duration,
-      type: bookingTemplate.type,
-      location: bookingTemplate.location,
-      host: bookingTemplate.host,
-      start: startDate,
-      end: endDate,
-      attendeeEmail,
-      attendeeName: attendeeName || '',
-      notes: notes || '',
-      status: 'scheduled'
-    });
-
-    res.status(201).json(scheduledBooking);
-  } catch (error) {
-    console.error('Error scheduling booking:', error);
-    res.status(500).json({ 
-      message: "Error scheduling booking", 
-      error: error.message 
-    });
-  }
-};
+import { sendBookingConfirmation, getEmailContent } from "../utils/emailService.js";
 
 export const createBooking = async (req, res) => {
   try {
@@ -404,7 +296,9 @@ export const createBooking = async (req, res) => {
 
 export const getBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ host: req.user._id }).sort({ start: -1 });
+    const bookings = await Booking.find({ host: req.user._id })
+      .populate("host", "name email")
+      .sort({ start: -1 });
     res.json(bookings);
   } catch (error) {
     console.error('Get bookings error:', error);
@@ -493,5 +387,128 @@ export const deleteBooking = async (req, res) => {
   } catch (error) {
     console.error('Delete booking error:', error);
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const getPublicBookingDetails = async (req, res) => {
+  try {
+    const { username, eventTitle } = req.params;
+
+    // Find the user by username
+    const user = await User.findOne({ 
+      email: new RegExp(`^${username}@`, 'i') 
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Host not found" });
+    }
+
+    // Convert event title to a URL-friendly format for comparison
+    const urlFriendlyTitle = eventTitle.toLowerCase().replace(/-/g, ' ');
+
+    // Find the booking
+    const booking = await Booking.findOne({
+      host: user._id,
+      title: new RegExp(`^${urlFriendlyTitle}$`, 'i')
+    }).populate('host', 'name email');
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    res.json(booking);
+  } catch (error) {
+    console.error('Error fetching public booking details:', error);
+    res.status(500).json({ message: "Error fetching booking details", error: error.message });
+  }
+};
+
+export const scheduleBooking = async (req, res) => {
+  try {
+    const { bookingId, startTime, attendeeEmail, attendeeName, notes } = req.body;
+
+    if (!bookingId || !startTime || !attendeeEmail) {
+      return res.status(400).json({ 
+        message: "Missing required fields: bookingId, startTime, and attendeeEmail are required" 
+      });
+    }
+
+    // Find the original booking template
+    const bookingTemplate = await Booking.findById(bookingId).populate('host', 'name email');
+    if (!bookingTemplate) {
+      return res.status(404).json({ message: "Booking template not found" });
+    }
+
+    // Calculate end time based on duration
+    const startDate = new Date(startTime);
+    const endDate = new Date(startDate.getTime() + (bookingTemplate.duration * 60000));
+
+    // Check if the time slot is available
+    const conflictingBooking = await Booking.findOne({
+      host: bookingTemplate.host,
+      start: { $lt: endDate },
+      end: { $gt: startDate },
+      status: 'scheduled',
+      _id: { $ne: bookingId }
+    });
+
+    if (conflictingBooking) {
+      return res.status(400).json({ message: "Selected time slot is not available" });
+    }
+
+    // Create the scheduled booking
+    const scheduledBooking = await Booking.create({
+      title: bookingTemplate.title,
+      duration: bookingTemplate.duration,
+      type: bookingTemplate.type,
+      location: bookingTemplate.location,
+      host: bookingTemplate.host,
+      start: startDate,
+      end: endDate,
+      attendeeEmail,
+      attendeeName: attendeeName || '',
+      notes: notes || '',
+      status: 'scheduled'
+    });
+
+    // Populate the host information
+    await scheduledBooking.populate('host', 'name email');
+
+    // Create a response object that includes the booking data
+    const responseData = scheduledBooking.toObject();
+
+    // Send confirmation email
+    try {
+      console.log('Sending booking confirmation email to:', attendeeEmail);
+      const emailInfo = await sendBookingConfirmation(scheduledBooking, {
+        name: attendeeName,
+        email: attendeeEmail
+      });
+      
+      // Add emailId to the response
+      responseData.emailId = emailInfo.messageId || `mock-email-${Date.now()}`;
+      console.log('Email sent with ID:', responseData.emailId);
+    } catch (emailError) {
+      console.error('Error sending confirmation email:', emailError);
+      // Add a fallback emailId even if email sending fails
+      responseData.emailId = `fallback-email-${Date.now()}`;
+    }
+
+    res.status(201).json(responseData);
+  } catch (error) {
+    console.error('Error scheduling booking:', error);
+    res.status(500).json({ message: "Error scheduling booking", error: error.message });
+  }
+};
+
+export const getEmailContentEndpoint = async (req, res) => {
+  try {
+    const { emailId } = req.params;
+    console.log('Fetching email content for ID:', emailId);
+    const emailContent = await getEmailContent(emailId);
+    res.json({ emailContent });
+  } catch (error) {
+    console.error('Error fetching email content:', error);
+    res.status(500).json({ message: "Error fetching email content", error: error.message });
   }
 };
