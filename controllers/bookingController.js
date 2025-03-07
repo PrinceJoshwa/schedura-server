@@ -512,3 +512,4 @@ export const getEmailContentEndpoint = async (req, res) => {
     res.status(500).json({ message: "Error fetching email content", error: error.message });
   }
 };
+
