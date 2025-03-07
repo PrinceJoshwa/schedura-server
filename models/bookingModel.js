@@ -40,14 +40,34 @@ const bookingSchema = new mongoose.Schema({
   },
   attendeeEmail: {
     type: String,
+    validate: {
+      validator: function(v) {
+        return !v || /\S+@\S+\.\S+/.test(v);
+      },
+      message: props => `${props.value} is not a valid email address!`
+    }
   },
-  notes: {
+  notes: String,
+  status: {
     type: String,
+    enum: ['available', 'scheduled', 'cancelled'],
+    default: 'available'
   },
   emailId: {
     type: String,
   },
 }, { timestamps: true });
+
+
+// Add a pre-save middleware to ensure end time is after start time
+bookingSchema.pre('save', function(next) {
+  if (this.start && this.end) {
+    if (this.end <= this.start) {
+      next(new Error('End time must be after start time'));
+    }
+  }
+  next();
+});
 
 const Booking = mongoose.model('Booking', bookingSchema);
 

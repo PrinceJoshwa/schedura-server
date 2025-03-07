@@ -5,7 +5,10 @@ import {
   getBookings,
   getBookingById,
   updateBooking,
-  deleteBooking
+  deleteBooking,
+  getPublicBookingDetails,
+  scheduleBooking,
+  getEmailContentEndpoint
 } from '../controllers/bookingController.js';
 
 const router = express.Router();
@@ -16,5 +19,10 @@ router.route('/')
 router.route('/:id')
         .get(protect, getBookingById)
         .put(protect, updateBooking).delete(protect, deleteBooking);
+
+// Public routes
+router.get('/public/:username/:eventTitle', getPublicBookingDetails);
+router.post('/schedule', scheduleBooking);
+router.get('/email/:emailId', getEmailContentEndpoint);
 
 export default router;
